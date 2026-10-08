@@ -1,136 +1,228 @@
-bash
-
-cat /home/claude/asamblea-acb/admin.html
-Salida
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin – Asamblea ACB</title>
+<title>Admin – Asamblea ACB 2026</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5}
-  h1{color:#3C3489;font-size:1.3rem;margin-bottom:20px}
-  .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-  input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;margin-top:6px}
-  .btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:500px;margin:0 auto;padding:20px;background:#f5f5f5;min-height:100vh}
+  h1{color:#3C3489;font-size:1.2rem;text-align:center;margin-bottom:4px}
+  .sub{text-align:center;color:#888;font-size:13px;margin-bottom:20px}
+  .card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  h2{font-size:15px;color:#3C3489;margin-bottom:12px;font-weight:700}
+  input,textarea{width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:15px;margin:6px 0;font-family:inherit}
+  input:focus,textarea:focus{outline:none;border-color:#3C3489}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px}
   .btn-primary{background:#3C3489;color:#fff}
-  .btn-danger{background:#C0392B;color:#fff}
-  .btn-success{background:#1D9E75;color:#fff}
-  .estado{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block}
-  .abierta{background:#E1F5EE;color:#085041}
-  .cerrada{background:#f0f0f0;color:#666}
-  .resultado-bar{height:28px;background:#3C3489;border-radius:4px;display:flex;align-items:center;padding:0 10px;color:#fff;font-size:13px;transition:width .5s}
-  #msg{padding:10px;border-radius:8px;font-size:13px;margin:8px 0;display:none}
-  .ok{background:#E1F5EE;color:#085041}.err{background:#fdecea;color:#c0392b}
-  label{font-size:13px;font-weight:500;color:#555}
-  .spinner{width:20px;height:20px;border:2px solid #eee;border-top-color:#3C3489;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+  .btn-rojo{background:#e74c3c;color:#fff}
+  .btn-verde{background:#1D9E75;color:#fff}
+  .btn-sm{width:auto;padding:8px 16px;font-size:13px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge-open{background:#E1F5EE;color:#085041}
+  .badge-closed{background:#f0f0f0;color:#666}
+  .resultado-bar{margin:8px 0}
+  .barra{height:12px;border-radius:6px;background:#EEEDFE;overflow:hidden;margin:4px 0}
+  .barra-inner{height:100%;background:#3C3489;border-radius:6px;transition:width .5s}
+  .stat{text-align:center;padding:10px;background:#EEEDFE;border-radius:10px}
+  .stat-num{font-size:28px;font-weight:800;color:#3C3489}
+  .stat-label{font-size:12px;color:#666;margin-top:2px}
+  .loading{text-align:center;padding:14px;color:#888;font-size:13px}
+  .spinner{width:24px;height:24px;border:3px solid #eee;border-top-color:#3C3489;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .hint{font-size:12px;color:#888;margin-top:4px}
+  #estado-actual{padding:12px;border-radius:10px;text-align:center;margin-bottom:12px;font-weight:600;font-size:14px}
+  .estado-abierta{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+  .estado-cerrada{background:#f0f0f0;color:#666;border:2px solid #ddd}
+  .historial-item{border-bottom:1px solid #f0f0f0;padding:10px 0;font-size:13px}
+  .historial-item:last-child{border-bottom:none}
 </style>
 </head>
 <body>
-<h1>🗳️ Panel Administrador – ACB</h1>
-<div id="msg"></div>
 
+<h1>🌿 Admin – Asamblea ACB 2026</h1>
+<p class="sub">Panel de administración</p>
+
+<!-- ESTADÍSTICAS -->
 <div class="card">
-  <label>Título de la votación</label>
-  <input id="titulo" placeholder="Ej: Aprobación de estatutos" />
-  <label style="margin-top:12px;display:block">Opciones (una por línea)</label>
+  <h2>📊 Asistencia</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="stat">
+      <div class="stat-num" id="num-presentes">–</div>
+      <div class="stat-label">Socios presentes</div>
+    </div>
+    <div class="stat" style="background:#FAEEDA">
+      <div class="stat-num" style="color:#EF9F27" id="num-votos">–</div>
+      <div class="stat-label">Votos emitidos</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:12px" onclick="actualizarStats()">↻ Actualizar</button>
+</div>
+
+<!-- VOTACIÓN ACTIVA -->
+<div class="card">
+  <h2>🗳️ Votación activa</h2>
+  <div id="estado-actual" class="estado-cerrada">Sin votación activa</div>
+  <div id="resultados-activos"></div>
+  <button class="btn btn-rojo" onclick="cerrarVotacion()">⏹ Cerrar votación activa</button>
+  <button class="btn btn-primary" style="margin-top:8px" onclick="verResultadosActivos()">↻ Ver resultados</button>
+</div>
+
+<!-- NUEVA VOTACIÓN -->
+<div class="card">
+  <h2>➕ Nueva votación</h2>
+  <input id="titulo" type="text" placeholder="Título de la votación" />
+  <p class="hint">Opciones (una por línea):</p>
   <textarea id="opciones" rows="4" placeholder="Sí&#10;No&#10;Abstención"></textarea>
-  <button class="btn btn-primary" onclick="crear()">▶ Abrir nueva votación</button>
+  <button class="btn btn-verde" onclick="crearVotacion()">Abrir votación</button>
 </div>
 
+<!-- HISTORIAL -->
 <div class="card">
-  <button class="btn btn-danger" onclick="cerrar()">⏹ Cerrar votación activa</button>
-</div>
-
-<div class="card" id="resultados-card" style="display:none">
-  <h3 id="res-titulo" style="margin:0 0 12px;color:#3C3489"></h3>
-  <div id="res-barras"></div>
-  <p id="res-total" style="font-size:13px;color:#888;margin:8px 0 0"></p>
-</div>
-
-<div class="card">
-  <strong style="font-size:13px">Historial de votaciones</strong>
-  <div id="lista" style="margin-top:10px"></div>
-  <button class="btn btn-success" style="margin-top:8px" onclick="cargarLista()">↻ Actualizar</button>
+  <h2>📋 Historial de votaciones</h2>
+  <div id="historial"><p class="loading">Cargando...</p></div>
+  <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="cargarHistorial()">↻ Actualizar historial</button>
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCkUG83pus7nlemBtneTJ6Z0LL0UiYXOtAfeMTIvsTn0tplR-uUnovxQOGHt2xy4s/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtQaKi4w50L7vS5m5HLriIe5oOOkUehHeHoLUUimHOKgQodp8LkOakvfoMCPXocmIr/exec';
 
-function showMsg(txt, tipo) {
-  const el = document.getElementById('msg');
-  el.textContent = txt; el.className = tipo; el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3500);
+let votacionActivaId = null;
+
+function api(action, params, callback) {
+  const cbName = 'cb_' + Date.now();
+  const script = document.createElement('script');
+  let url = SCRIPT_URL + '?action=' + action + '&callback=' + cbName;
+  for (const [k, v] of Object.entries(params || {})) {
+    url += '&' + k + '=' + encodeURIComponent(v);
+  }
+  window[cbName] = function(data) {
+    delete window[cbName];
+    document.body.removeChild(script);
+    callback(data);
+  };
+  script.onerror = function() {
+    delete window[cbName];
+    if (document.body.contains(script)) document.body.removeChild(script);
+    callback({ ok: false, msg: 'Error de conexión' });
+  };
+  script.src = url;
+  document.body.appendChild(script);
 }
 
-function apiFetch(params) {
-  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
-  return fetch(url).then(r => r.json());
+function actualizarStats() {
+  api('obtenerVotacionActiva', {}, function(r) {
+    const el = document.getElementById('estado-actual');
+    if (r.ok) {
+      votacionActivaId = r.id;
+      el.className = 'estado-abierta';
+      el.textContent = '✅ ABIERTA: ' + r.titulo;
+      verResultadosActivos();
+    } else {
+      votacionActivaId = null;
+      el.className = 'estado-cerrada';
+      el.textContent = 'Sin votación activa';
+      document.getElementById('resultados-activos').innerHTML = '';
+    }
+  });
+  // presentes
+  api('listarVotaciones', {}, function(r) {
+    if (r.ok) {
+      document.getElementById('num-presentes').textContent = '–';
+    }
+  });
 }
 
-function crear() {
-  const titulo = document.getElementById('titulo').value.trim();
-  const opcs = document.getElementById('opciones').value.trim().split('\n').filter(Boolean);
-  if (!titulo || opcs.length < 2) { showMsg('Completa el título y al menos 2 opciones', 'err'); return; }
-  showMsg('Creando votación...', 'ok');
-  apiFetch({ action: 'crearVotacion', titulo, opciones: opcs.join('|') })
-    .then(r => {
-      if (r.ok) { showMsg('✅ Votación abierta', 'ok'); cargarLista(); }
-      else showMsg('Error: ' + (r.msg || 'desconocido'), 'err');
-    })
-    .catch(() => showMsg('Error de conexión', 'err'));
+function verResultadosActivos() {
+  if (!votacionActivaId) { actualizarStats(); return; }
+  api('obtenerResultados', { votacionId: votacionActivaId }, function(r) {
+    if (!r.ok) return;
+    document.getElementById('num-votos').textContent = r.total;
+    const cont = document.getElementById('resultados-activos');
+    let html = '<div style="margin:10px 0">';
+    const total = r.total || 1;
+    for (const [op, n] of Object.entries(r.conteo)) {
+      const pct = Math.round(n / total * 100);
+      html += `<div class="resultado-bar">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600">
+          <span>${op}</span><span>${n} (${pct}%)</span>
+        </div>
+        <div class="barra"><div class="barra-inner" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+    html += `<div style="font-size:12px;color:#888;text-align:right">Total: ${r.total} votos</div></div>`;
+    cont.innerHTML = html;
+  });
 }
 
-function cerrar() {
+function cerrarVotacion() {
   if (!confirm('¿Cerrar la votación activa?')) return;
-  apiFetch({ action: 'cerrarVotacionActiva' })
-    .then(() => { showMsg('✅ Votación cerrada', 'ok'); cargarLista(); })
-    .catch(() => showMsg('Error de conexión', 'err'));
+  api('cerrarVotacionActiva', {}, function(r) {
+    alert(r.ok ? '✅ Votación cerrada' : '❌ ' + r.msg);
+    actualizarStats();
+    cargarHistorial();
+  });
 }
 
-function verResultados(id) {
-  apiFetch({ action: 'obtenerResultados', votacionId: id })
-    .then(r => {
-      if (!r.ok) return;
-      const card = document.getElementById('resultados-card');
-      card.style.display = 'block';
-      document.getElementById('res-titulo').textContent = '📊 ' + r.titulo;
-      const barras = document.getElementById('res-barras');
-      const max = Math.max(...Object.values(r.conteo), 1);
-      barras.innerHTML = Object.entries(r.conteo).map(([op, cnt]) => {
-        const pct = Math.round(cnt / (r.total || 1) * 100);
-        const w = Math.round(cnt / max * 100);
-        return `<div style="margin:6px 0">
-          <div style="font-size:12px;color:#555;margin-bottom:2px">${op}</div>
-          <div style="background:#eee;border-radius:4px;overflow:hidden">
-            <div class="resultado-bar" style="width:${w}%">${cnt} votos (${pct}%)</div>
-          </div></div>`;
-      }).join('');
-      document.getElementById('res-total').textContent = `Total votos: ${r.total}`;
+function crearVotacion() {
+  const titulo = document.getElementById('titulo').value.trim();
+  const opcionesRaw = document.getElementById('opciones').value.trim();
+  if (!titulo) return alert('Escribe el título de la votación');
+  if (!opcionesRaw) return alert('Escribe al menos 2 opciones');
+  const opciones = opcionesRaw.split('\n').map(o => o.trim()).filter(o => o);
+  if (opciones.length < 2) return alert('Escribe al menos 2 opciones, una por línea');
+  api('crearVotacion', { titulo, opciones: opciones.join('|') }, function(r) {
+    if (r.ok) {
+      alert('✅ Votación abierta: ' + titulo);
+      document.getElementById('titulo').value = '';
+      document.getElementById('opciones').value = '';
+      actualizarStats();
+      cargarHistorial();
+    } else {
+      alert('❌ ' + r.msg);
+    }
+  });
+}
+
+function cargarHistorial() {
+  const cont = document.getElementById('historial');
+  cont.innerHTML = '<p class="loading"><span class="spinner"></span>Cargando...</p>';
+  api('listarVotaciones', {}, function(r) {
+    if (!r.ok || !r.votaciones.length) {
+      cont.innerHTML = '<p style="font-size:13px;color:#888;padding:10px 0">Sin votaciones registradas</p>';
+      return;
+    }
+    let html = '';
+    r.votaciones.slice().reverse().forEach(v => {
+      const badge = v.estado === 'ABIERTA'
+        ? '<span class="badge badge-open">ABIERTA</span>'
+        : '<span class="badge badge-closed">CERRADA</span>';
+      html += `<div class="historial-item">
+        ${badge} <strong>${v.titulo}</strong>
+        <div style="color:#888;font-size:12px;margin-top:2px">${v.timestamp || ''}</div>
+        ${v.estado === 'CERRADA' ? `<button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="verResultados('${v.id}','${v.titulo}')">Ver resultados</button>` : ''}
+      </div>`;
     });
+    cont.innerHTML = html;
+  });
 }
 
-function cargarLista() {
-  apiFetch({ action: 'listarVotaciones' })
-    .then(lista => {
-      const div = document.getElementById('lista');
-      if (!lista.length) { div.innerHTML = '<p style="color:#888;font-size:13px">Sin votaciones aún</p>'; return; }
-      div.innerHTML = lista.reverse().map(v =>
-        `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
-          <span style="font-size:13px">${v.titulo}</span>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span class="estado ${v.estado.toLowerCase()}">${v.estado}</span>
-            <button onclick="verResultados('${v.id}')" style="font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#fff">Ver</button>
-          </div></div>`
-      ).join('');
-    });
+function verResultados(id, titulo) {
+  api('obtenerResultados', { votacionId: id }, function(r) {
+    if (!r.ok) return alert('No se pudieron cargar resultados');
+    let msg = `Resultados: ${titulo}\n\n`;
+    for (const [op, n] of Object.entries(r.conteo)) {
+      const pct = r.total ? Math.round(n / r.total * 100) : 0;
+      msg += `${op}: ${n} (${pct}%)\n`;
+    }
+    msg += `\nTotal votos: ${r.total}`;
+    alert(msg);
+  });
 }
 
-cargarLista();
+// Inicializar
+actualizarStats();
+cargarHistorial();
 </script>
 </body>
 </html>
