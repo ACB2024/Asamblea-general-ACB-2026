@@ -74,8 +74,8 @@ function verificar() {
   if (!cedula) return;
   mostrar('pantalla-cargando');
 
-  const url = SCRIPT_URL + '?action=verificarEntrada&cedula=' + encodeURIComponent(cedula);
-  fetch(url)
+ const url = SCRIPT_URL + '?action=verificarEntrada&cedula=' + encodeURIComponent(cedula);
+  fetch(url, {redirect: 'follow', mode: 'cors'})
     .then(r => r.json())
     .then(r => mostrarResultado(r))
     .catch(() => mostrarResultado({ ok: false, msg: 'Error de conexión. Intenta de nuevo.' }));
