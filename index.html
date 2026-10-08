@@ -1,0 +1,137 @@
+bash
+
+cat /home/claude/asamblea-acb/index.html
+Salida
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Votación – Asamblea ACB</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:20px;background:#f5f5f5}
+  h1{color:#3C3489;font-size:1.2rem;text-align:center}
+  .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:18px;text-align:center;letter-spacing:6px;box-sizing:border-box}
+  .btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
+  .btn-primary{background:#3C3489;color:#fff}
+  .opcion{display:block;width:100%;padding:14px;margin:8px 0;border:2px solid #ddd;border-radius:10px;font-size:15px;cursor:pointer;background:#fff;text-align:left;box-sizing:border-box;transition:all .2s}
+  .opcion:hover,.opcion.sel{border-color:#3C3489;background:#EEEDFE;color:#3C3489;font-weight:600}
+  .espera{text-align:center;color:#888;padding:20px;font-size:14px}
+  .loading{text-align:center;padding:20px;color:#888}
+  .spinner{width:32px;height:32px;border:3px solid #eee;border-top-color:#3C3489;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #pantalla-codigo,#pantalla-voto,#pantalla-confirmacion,#pantalla-espera,#pantalla-cargando{display:none}
+</style>
+</head>
+<body>
+<h1>🌿 Asamblea ACB 2026</h1>
+
+<div id="pantalla-codigo" class="card" style="display:block">
+  <p style="text-align:center;color:#555;font-size:14px;margin:0 0 16px">Ingresa el código que recibiste al entrar</p>
+  <input id="codigo" type="number" placeholder="000000" maxlength="6" />
+  <button class="btn btn-primary" onclick="verificar()">Ingresar</button>
+</div>
+
+<div id="pantalla-cargando" class="card">
+  <div class="loading"><div class="spinner"></div><p>Verificando...</p></div>
+</div>
+
+<div id="pantalla-espera" class="card">
+  <div class="espera">
+    <div style="font-size:40px">⏳</div>
+    <p id="nombre-socio" style="font-weight:600;color:#3C3489;margin:8px 0"></p>
+    <p>Esperando que el administrador abra la siguiente votación...</p>
+    <button class="btn btn-primary" style="max-width:200px;margin:12px auto 0" onclick="buscarActiva()">↻ Actualizar</button>
+  </div>
+</div>
+
+<div id="pantalla-voto" class="card">
+  <p style="font-size:12px;color:#888;margin:0 0 8px">VOTACIÓN ACTIVA</p>
+  <h2 id="voto-titulo" style="font-size:1.1rem;color:#3C3489;margin:0 0 16px"></h2>
+  <div id="voto-opciones"></div>
+  <button class="btn btn-primary" onclick="votar()" id="btn-votar" disabled>Confirmar voto</button>
+</div>
+
+<div id="pantalla-confirmacion" class="card" style="text-align:center">
+  <div style="font-size:50px">✅</div>
+  <h2 style="color:#085041;margin:8px 0">Voto registrado</h2>
+  <p id="conf-texto" style="color:#555;font-size:14px"></p>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="buscarActiva()">Esperar siguiente votación</button>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCkUG83pus7nlemBtneTJ6Z0LL0UiYXOtAfeMTIvsTn0tplR-uUnovxQOGHt2xy4s/exec';
+let codigoSocio = '', votacionActualId = '', opcionSel = '';
+
+function mostrar(id) {
+  ['pantalla-codigo','pantalla-cargando','pantalla-espera','pantalla-voto','pantalla-confirmacion']
+    .forEach(p => document.getElementById(p).style.display = p === id ? 'block' : 'none');
+}
+
+function verificar() {
+  const c = document.getElementById('codigo').value.trim();
+  if (c.length < 6) { alert('Ingresa los 6 dígitos'); return; }
+  mostrar('pantalla-cargando');
+  fetch(SCRIPT_URL + '?action=verificarCodigo&codigo=' + encodeURIComponent(c))
+    .then(r => r.json())
+    .then(r => {
+      if (r.ok) {
+        codigoSocio = c;
+        document.getElementById('nombre-socio').textContent = '¡Hola, ' + r.nombre + '!';
+        mostrar('pantalla-espera');
+        buscarActiva();
+      } else {
+        mostrar('pantalla-codigo');
+        alert('Código no válido. Verifica con el verificador de entrada.');
+      }
+    })
+    .catch(() => { mostrar('pantalla-codigo'); alert('Error de conexión. Intenta de nuevo.'); });
+}
+
+function buscarActiva() {
+  fetch(SCRIPT_URL + '?action=obtenerVotacionActiva')
+    .then(r => r.json())
+    .then(r => {
+      if (r.ok) {
+        votacionActualId = r.id;
+        document.getElementById('voto-titulo').textContent = r.titulo;
+        const div = document.getElementById('voto-opciones');
+        opcionSel = '';
+        document.getElementById('btn-votar').disabled = true;
+        div.innerHTML = r.opciones.map(o =>
+          `<button class="opcion" onclick="seleccionar(this,'${o}')">${o}</button>`
+        ).join('');
+        mostrar('pantalla-voto');
+      } else {
+        mostrar('pantalla-espera');
+      }
+    })
+    .catch(() => mostrar('pantalla-espera'));
+}
+
+function seleccionar(el, opcion) {
+  document.querySelectorAll('.opcion').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  opcionSel = opcion;
+  document.getElementById('btn-votar').disabled = false;
+}
+
+function votar() {
+  if (!opcionSel) return;
+  if (!confirm('¿Confirmas tu voto por: ' + opcionSel + '?')) return;
+  fetch(SCRIPT_URL + '?action=registrarVoto&codigo=' + encodeURIComponent(codigoSocio) + '&votacionId=' + encodeURIComponent(votacionActualId) + '&opcion=' + encodeURIComponent(opcionSel))
+    .then(r => r.json())
+    .then(r => {
+      if (r.ok) {
+        document.getElementById('conf-texto').textContent = 'Votaste por: ' + opcionSel;
+        mostrar('pantalla-confirmacion');
+      } else { alert(r.msg); }
+    })
+    .catch(() => alert('Error de conexión. Intenta de nuevo.'));
+}
+</script>
+</body>
+</html>
