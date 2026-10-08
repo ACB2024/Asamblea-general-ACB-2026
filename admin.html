@@ -1,0 +1,136 @@
+bash
+
+cat /home/claude/asamblea-acb/admin.html
+Salida
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin – Asamblea ACB</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5}
+  h1{color:#3C3489;font-size:1.3rem;margin-bottom:20px}
+  .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;margin-top:6px}
+  .btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+  .btn-primary{background:#3C3489;color:#fff}
+  .btn-danger{background:#C0392B;color:#fff}
+  .btn-success{background:#1D9E75;color:#fff}
+  .estado{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block}
+  .abierta{background:#E1F5EE;color:#085041}
+  .cerrada{background:#f0f0f0;color:#666}
+  .resultado-bar{height:28px;background:#3C3489;border-radius:4px;display:flex;align-items:center;padding:0 10px;color:#fff;font-size:13px;transition:width .5s}
+  #msg{padding:10px;border-radius:8px;font-size:13px;margin:8px 0;display:none}
+  .ok{background:#E1F5EE;color:#085041}.err{background:#fdecea;color:#c0392b}
+  label{font-size:13px;font-weight:500;color:#555}
+  .spinner{width:20px;height:20px;border:2px solid #eee;border-top-color:#3C3489;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<h1>🗳️ Panel Administrador – ACB</h1>
+<div id="msg"></div>
+
+<div class="card">
+  <label>Título de la votación</label>
+  <input id="titulo" placeholder="Ej: Aprobación de estatutos" />
+  <label style="margin-top:12px;display:block">Opciones (una por línea)</label>
+  <textarea id="opciones" rows="4" placeholder="Sí&#10;No&#10;Abstención"></textarea>
+  <button class="btn btn-primary" onclick="crear()">▶ Abrir nueva votación</button>
+</div>
+
+<div class="card">
+  <button class="btn btn-danger" onclick="cerrar()">⏹ Cerrar votación activa</button>
+</div>
+
+<div class="card" id="resultados-card" style="display:none">
+  <h3 id="res-titulo" style="margin:0 0 12px;color:#3C3489"></h3>
+  <div id="res-barras"></div>
+  <p id="res-total" style="font-size:13px;color:#888;margin:8px 0 0"></p>
+</div>
+
+<div class="card">
+  <strong style="font-size:13px">Historial de votaciones</strong>
+  <div id="lista" style="margin-top:10px"></div>
+  <button class="btn btn-success" style="margin-top:8px" onclick="cargarLista()">↻ Actualizar</button>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCkUG83pus7nlemBtneTJ6Z0LL0UiYXOtAfeMTIvsTn0tplR-uUnovxQOGHt2xy4s/exec';
+
+function showMsg(txt, tipo) {
+  const el = document.getElementById('msg');
+  el.textContent = txt; el.className = tipo; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+
+function apiFetch(params) {
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  return fetch(url).then(r => r.json());
+}
+
+function crear() {
+  const titulo = document.getElementById('titulo').value.trim();
+  const opcs = document.getElementById('opciones').value.trim().split('\n').filter(Boolean);
+  if (!titulo || opcs.length < 2) { showMsg('Completa el título y al menos 2 opciones', 'err'); return; }
+  showMsg('Creando votación...', 'ok');
+  apiFetch({ action: 'crearVotacion', titulo, opciones: opcs.join('|') })
+    .then(r => {
+      if (r.ok) { showMsg('✅ Votación abierta', 'ok'); cargarLista(); }
+      else showMsg('Error: ' + (r.msg || 'desconocido'), 'err');
+    })
+    .catch(() => showMsg('Error de conexión', 'err'));
+}
+
+function cerrar() {
+  if (!confirm('¿Cerrar la votación activa?')) return;
+  apiFetch({ action: 'cerrarVotacionActiva' })
+    .then(() => { showMsg('✅ Votación cerrada', 'ok'); cargarLista(); })
+    .catch(() => showMsg('Error de conexión', 'err'));
+}
+
+function verResultados(id) {
+  apiFetch({ action: 'obtenerResultados', votacionId: id })
+    .then(r => {
+      if (!r.ok) return;
+      const card = document.getElementById('resultados-card');
+      card.style.display = 'block';
+      document.getElementById('res-titulo').textContent = '📊 ' + r.titulo;
+      const barras = document.getElementById('res-barras');
+      const max = Math.max(...Object.values(r.conteo), 1);
+      barras.innerHTML = Object.entries(r.conteo).map(([op, cnt]) => {
+        const pct = Math.round(cnt / (r.total || 1) * 100);
+        const w = Math.round(cnt / max * 100);
+        return `<div style="margin:6px 0">
+          <div style="font-size:12px;color:#555;margin-bottom:2px">${op}</div>
+          <div style="background:#eee;border-radius:4px;overflow:hidden">
+            <div class="resultado-bar" style="width:${w}%">${cnt} votos (${pct}%)</div>
+          </div></div>`;
+      }).join('');
+      document.getElementById('res-total').textContent = `Total votos: ${r.total}`;
+    });
+}
+
+function cargarLista() {
+  apiFetch({ action: 'listarVotaciones' })
+    .then(lista => {
+      const div = document.getElementById('lista');
+      if (!lista.length) { div.innerHTML = '<p style="color:#888;font-size:13px">Sin votaciones aún</p>'; return; }
+      div.innerHTML = lista.reverse().map(v =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
+          <span style="font-size:13px">${v.titulo}</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="estado ${v.estado.toLowerCase()}">${v.estado}</span>
+            <button onclick="verResultados('${v.id}')" style="font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#fff">Ver</button>
+          </div></div>`
+      ).join('');
+    });
+}
+
+cargarLista();
+</script>
+</body>
+</html>
